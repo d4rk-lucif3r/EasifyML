@@ -1,5 +1,6 @@
-
+accuracy_scores ={}
 def predictor(features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10, random_state =42):
+    global accuracy_scores
     """
     Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
     Fits every model on training set and predicts results find and plots Confusion Matrix, 
@@ -48,6 +49,24 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
                 )
     
     """
+    print('Checking if labels or features are categorical!\n')
+    cat_features=[i for i in features.columns if features.dtypes[i]=='object']
+    if len(cat_features) == 1 :
+        print('Features are Categorical\n')
+        # Encoding the Independent Variable
+        from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+        le = LabelEncoder()
+        print('Encoding Features\n')
+        features[cat_features]= le.fit_transform(features[cat_features])
+        print('Encoding Features Done\n')
+    if labels.dtype == 'O':
+        from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+        le = LabelEncoder()
+        print('Labels are Categorical\n')
+        print('Encoding Features\n')
+        labels = le.fit_transform(labels)
+        print('Encoding Features Done\n')
+    
     print('Applying SMOTE \n')
     from imblearn.over_sampling import SMOTE
     sm=SMOTE(k_neighbors=4)
@@ -178,4 +197,4 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         best_parameters = grid_search.best_params_
         print("Best Accuracy: {:.2f} %".format(best_accuracy*100))
         print("Best Parameters:", best_parameters)
-        return accuracy_scores
+        
