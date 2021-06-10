@@ -49,45 +49,45 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
                 )
     
     """
-    print('Checking if labels or features are categorical!\n')
+    print('Checking if labels or features are categorical! [*]\n')
     cat_features=[i for i in features.columns if features.dtypes[i]=='object']
     if len(cat_features) == 1 :
         print('Features are Categorical\n')
         # Encoding the Independent Variable
         from sklearn.preprocessing import LabelEncoder, OneHotEncoder
         le = LabelEncoder()
-        print('Encoding Features\n')
+        print('Encoding Features [*]\n')
         features[cat_features]= le.fit_transform(features[cat_features])
-        print('Encoding Features Done\n')
+        print('Encoding Features Done [',u'\u2713',']\n')
     if labels.dtype == 'O':
         from sklearn.preprocessing import LabelEncoder, OneHotEncoder
         le = LabelEncoder()
-        print('Labels are Categorical\n')
-        print('Encoding Features\n')
+        print('Labels are Categorical [*] \n')
+        print('Encoding Labels \n')
         labels = le.fit_transform(labels)
-        print('Encoding Features Done\n')
+        print('Encoding Labels Done [',u'\u2713',']\n')
     
-    print('Applying SMOTE \n')
+    print('Applying SMOTE [*]\n')
     from imblearn.over_sampling import SMOTE
     sm=SMOTE(k_neighbors=4)
     features,labels=sm.fit_resample(features,labels)
-    print('SMOTE Done \n')
+    print('SMOTE Done [',u'\u2713',']\n')
     
-    print('Splitting Data into Train and Validation Sets \n')
+    print('Splitting Data into Train and Validation Sets [*]\n')
     from sklearn.model_selection import train_test_split
     X_train, X_val, y_train, y_val = train_test_split(features, labels, test_size= test_size, random_state= random_state)
-    print('Splitting Done \n')
+    print('Splitting Done [',u'\u2713',']\n')
     
-    print('Scaling Training and Test Sets \n')
+    print('Scaling Training and Test Sets [*]\n')
     from sklearn.preprocessing import StandardScaler
     sc = StandardScaler()
     X_train = sc.fit_transform(X_train)
     X_val = sc.transform(X_val)
-    print('Scaling Done \n')
+    print('Scaling Done [',u'\u2713',']\n')
     
      
     if predictor == 'lr':
-        print('Training Logistic Regression on Training Set')
+        print('Training Logistic Regression on Training Set [*]\n')
         from sklearn.linear_model import LogisticRegression
         classifier = LogisticRegression(**params)
         parameters= [{
@@ -97,7 +97,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         }]
 
     elif predictor == 'svm':
-        print('Training Support Vector Machine on Training Set')
+        print('Training Support Vector Machine on Training Set [*]\n')
         from sklearn.svm import SVC
         classifier = SVC(**params)
         parameters = [
@@ -107,7 +107,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
             {'kernel': ['sigmoid'], 'gamma': [1e-3, 1e-4,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], 'C' : np.logspace(-4, 4, 20)},
                      ]
     elif predictor == 'knn':
-        print('TrainingK-Nearest Neighbours on Training Set')
+        print('Training K-Nearest Neighbours on Training Set [*]\n')
         from sklearn.neighbors import KNeighborsClassifier
         classifier = KNeighborsClassifier(**params)
         parameters = [{
@@ -118,7 +118,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         }]
 
     elif predictor == 'dt':
-        print('Training Decision Tree Classifier on Training Set')
+        print('Training Decision Tree Classifier on Training Set [*]\n')
         from sklearn.tree import DecisionTreeClassifier
         classifier = DecisionTreeClassifier(**params)
         parameters= [{
@@ -129,12 +129,12 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
 
         }]
     elif predictor == 'nb':
-        print('Training Naive Bayes Classifier on Training Set')
+        print('Training Naive Bayes Classifier on Training Set [*]\n')
         from sklearn.naive_bayes import GaussianNB
         classifier = GaussianNB(**params)
         
     elif predictor == 'rfc':
-        print('Training Random Forest Classifier on Training Set')
+        print('Training Random Forest Classifier on Training Set [*]\n')
         from sklearn.ensemble import RandomForestClassifier
         classifier = RandomForestClassifier(**params)
         parameters = [{
@@ -147,7 +147,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
             'min_samples_split': [8, 10, 12],
         }]
     elif predictor == 'xgb':
-        print('Training XGBClassifier on Training Set')
+        print('Training XGBClassifier on Training Set [*]\n')
         from xgboost import XGBClassifier
         classifier = XGBClassifier(**params)
         parameters = {
@@ -159,29 +159,32 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
             'learning_rate': [0.3, 0.1, 0.03],
         }
 
-    print('Training Model \n')
     classifier.fit(X_train, y_train)
-    print('Model Training Done \n')
+    print('Model Training Done [',u'\u2713',']\n')
                               
-    print('''Making Confusion Matrix''')
+    print('''Making Confusion Matrix [*]''')
     from sklearn.metrics import confusion_matrix, accuracy_score, plot_confusion_matrix
     y_pred = classifier.predict(X_val)
     cm = confusion_matrix(y_val, y_pred)
     print(cm,'\n')
+    print('Confusion Matrix Done [',u'\u2713',']\n')
+    
     plot_confusion_matrix(classifier, X_val, y_val, cmap="pink")
-    print('''Evaluating Model Performance''')
+    
+    print('''Evaluating Model Performance [*]''')
     accuracy = accuracy_score(y_val, y_pred)
     print('Validation Accuracy is :',accuracy,'\n')
-
-    print('''Applying K-Fold Cross validation''')
+    print('Evaluating Model Performance [',u'\u2713',']\n')
+    
+    print('Applying K-Fold Cross validation [*]')
     from sklearn.model_selection import cross_val_score
     accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds,)
     print("Accuracy: {:.2f} %".format(accuracies.mean()*100))
     accuracy_scores[classifier] = accuracies.mean()*100
     print("Standard Deviation: {:.2f} %".format(accuracies.std()*100),'\n')   
-
+    print('K-Fold Cross validation [',u'\u2713',']\n')
     if not predictor == 'nb' and tune :
-        print('''Applying Grid Search Cross validation''')
+        print('Applying Grid Search Cross validation [*]')
         from sklearn.model_selection import GridSearchCV,StratifiedKFold
         
         grid_search = GridSearchCV(
@@ -197,4 +200,6 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         best_parameters = grid_search.best_params_
         print("Best Accuracy: {:.2f} %".format(best_accuracy*100))
         print("Best Parameters:", best_parameters)
+        print('Applying Grid Search Cross validation [',u'\u2713',']\n')
         
+        print('Complete [',u'\u2713',']\n')
