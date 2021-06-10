@@ -1,10 +1,10 @@
-accuracy_scores = {}
+
 def predictor(features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10, random_state =42):
     """
     Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
     Fits every model on training set and predicts results find and plots Confusion Matrix, 
     finds accuracy of model applies K-Fold Cross Validation 
-    and stores its accuracies in a dictionary containing Model name as Key and accuracies as values.
+    and stores its accuracies in a dictionary containing Model name as Key and accuracies as values and returns it
     Applies GridSearch Cross Validation and gives best params out from param list.
     
     Parameters:
@@ -66,7 +66,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
     X_val = sc.transform(X_val)
     print('Scaling Done \n')
     
-    global accuracy_scores
+     
     if predictor == 'lr':
         print('Training Logistic Regression on Training Set')
         from sklearn.linear_model import LogisticRegression
@@ -179,3 +179,4 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         best_parameters = grid_search.best_params_
         print("Best Accuracy: {:.2f} %".format(best_accuracy*100))
         print("Best Parameters:", best_parameters)
+        return accuracy_scores
