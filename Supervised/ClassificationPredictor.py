@@ -105,7 +105,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         parameters= [{
             'criterion': ['gini', 'entropy'],
             'splitter': ['best', 'random'],
-            'max_features': ['auto', 'sqrt', 'log2'],
+            'max_features': [2, 3],
             'max_depth': [4,5,6,7,8,9,10,11,12,15,20,30,40,50,70,90,120,150],
 
         }]
@@ -120,7 +120,6 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         classifier = RandomForestClassifier(**params)
         parameters = [{
             'criterion': ['gini', 'entropy'],
-            'max_features': ['auto', 'sqrt', 'log2'],
             'n_estimators': [50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000],
             'bootstrap': [True,False],
             'max_depth': [4,5,6,7,8,9,10,11,12,15,20,30,40,50,70,90,120,150],
