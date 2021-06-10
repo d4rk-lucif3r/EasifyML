@@ -166,14 +166,14 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
     from sklearn.metrics import confusion_matrix, accuracy_score, plot_confusion_matrix
     y_pred = classifier.predict(X_val)
     cm = confusion_matrix(y_val, y_pred)
-    print(cm,'\n')
+    print(cm)
     print('Confusion Matrix Done [',u'\u2713',']\n')
     
     plot_confusion_matrix(classifier, X_val, y_val, cmap="pink")
     
     print('''Evaluating Model Performance [*]''')
     accuracy = accuracy_score(y_val, y_pred)
-    print('Validation Accuracy is :',accuracy,'\n')
+    print('Validation Accuracy is :',accuracy)
     print('Evaluating Model Performance [',u'\u2713',']\n')
     
     print('Applying K-Fold Cross validation [*]')
@@ -181,7 +181,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
     accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds,)
     print("Accuracy: {:.2f} %".format(accuracies.mean()*100))
     accuracy_scores[classifier] = accuracies.mean()*100
-    print("Standard Deviation: {:.2f} %".format(accuracies.std()*100),'\n')   
+    print("Standard Deviation: {:.2f} %".format(accuracies.std()*100))   
     print('K-Fold Cross validation [',u'\u2713',']\n')
     if not predictor == 'nb' and tune :
         print('Applying Grid Search Cross validation [*]')
