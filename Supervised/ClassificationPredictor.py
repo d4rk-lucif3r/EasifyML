@@ -192,6 +192,7 @@ def predictor(
             'learning_rate': [0.3, 0.1, 0.03],
         }
     elif predictor =='ann':
+        print('Training ANN on Training Set [*]\n')
         import tensorflow as tf
         classifier = tf.keras.models.Sequential()
         for i in range(0,hidden_layers):
