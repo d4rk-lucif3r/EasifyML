@@ -199,8 +199,10 @@ def predictor(
             classifier.add(tf.keras.layers.Dense(units = input_units, activation = input_activation))
         classifier.add(tf.keras.layers.Dense(units = output_units, activation = output_activation))
         classifier.compile(optimizer = optimizer, loss = loss, metrics = metrics,)
-        ann_histry = classifier.fit(X_train, y_train,validation_split = validation_split , validation_data = (X_val, y_val), epochs = epochs)
-        
+        ann_history = classifier.fit(X_train, y_train,validation_split = validation_split , validation_data = (X_val, y_val), epochs = epochs)
+        accuracy_scores[predictor] = classifier.evaluate(X_train, y_train)[1] * 100
+#         ann_history.history['accuracy']
+        return ann_history
     if not predictor == 'ann': 
         classifier.fit(X_train, y_train)
     print('Model Training Done [',u'\u2713',']\n')
