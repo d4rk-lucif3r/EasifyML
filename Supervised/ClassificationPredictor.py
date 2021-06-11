@@ -1,12 +1,12 @@
 accuracy_scores ={}
 def predictor(
     features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10,
-    random_state =42, hidden_layers = 4, output_units = 1, input_units = 6,
+    random_state =42, pca_kernel = 'linear', n_components_lda = 1, lda = 'n', pca = 'n', n_components_pca = 2,
+    hidden_layers = 4, output_units = 1, input_units = 6,
     input_activation = 'relu', output_activation = 'sigmoid',optimizer = 'adam',
     metrics= ['accuracy'], loss = 'binary_crossentropy',validation_split = .20, epochs = 100,
     batch_size = 32,
-             ):
-    global accuracy_scores
+             ):  
     """
     Encode Categorical Data then Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
     Fits every model on training set and predicts results find and plots Confusion Matrix, 
@@ -44,6 +44,16 @@ def predictor(
                     include in the test split. If int, represents the absolute number of test samples. 
         cv_folds : int
                 No. of cross validation folds. Default = 10
+        pca : str
+            if 'y' will apply PCA on Train and Validation set. Default = 'n'
+        lda : str
+            if 'y' will apply LDA on Train and Validation set. Default = 'n'
+        pca_kernel : str
+                Kernel to be use in PCA. Default = 'linear'
+        n_components_lda : int
+                No. of components for LDA. Default = 1
+        n_components_pca : int
+                No. of components for PCA. Default = 2
         hidden_layers : int
                 No. of default layers of ann. Default = 4
         inputs_units : int
@@ -62,7 +72,8 @@ def predictor(
                 Percentage of validation set splitting in ann. Default = .20
         epochs : int
                 No. of epochs for ann. Default = 100
-                
+        batch_size :
+                Batch Size for ANN. Default = 32 
   
     
     EX: 
@@ -78,6 +89,21 @@ def predictor(
                 )
     
     """
+    global accuracy_scores
+    
+    ## Time Function ---------------------------------------------------------------------
+    import time
+    start = time.time()
+    print("Started Predictor \n")
+    
+    ## CHECKUP ---------------------------------------------------------------------
+    if not isinstance(features, pd.DataFrame) and not isinstance(labels, pd.Series) :
+        print('TypeError: This Function take features as Pandas Dataframe and labels as Pandas Series. Please check your implementation.\n')
+        end = time.time()
+        print(end - start)
+        return
+    
+    ## Encoding ---------------------------------------------------------------------
     print('Checking if labels or features are categorical! [*]\n')
     cat_features=[i for i in features.columns if features.dtypes[i]=='object']
     if len(cat_features) >= 1 :
@@ -100,18 +126,21 @@ def predictor(
         print('Encoding Labels Done [',u'\u2713',']\n')
     else:
         print('Features and labels are not categorical [',u'\u2713',']\n')
-
+        
+    ## SMOTE ---------------------------------------------------------------------
     print('Applying SMOTE [*]\n')
     from imblearn.over_sampling import SMOTE
     sm=SMOTE(k_neighbors=4)
     features,labels=sm.fit_resample(features,labels)
     print('SMOTE Done [',u'\u2713',']\n')
     
+    ## Splitting ---------------------------------------------------------------------
     print('Splitting Data into Train and Validation Sets [*]\n')
     from sklearn.model_selection import train_test_split
     X_train, X_val, y_train, y_val = train_test_split(features, labels, test_size= test_size, random_state= random_state)
     print('Splitting Done [',u'\u2713',']\n')
     
+    ## Scaling ---------------------------------------------------------------------
     print('Scaling Training and Test Sets [*]\n')
     from sklearn.preprocessing import StandardScaler
     sc = StandardScaler()
@@ -119,7 +148,39 @@ def predictor(
     X_val = sc.transform(X_val)
     print('Scaling Done [',u'\u2713',']\n')
     
-     
+    ## Dimensionality Reduction---------------------------------------------------------------------
+    if lda == 'y':
+        print('Applying LDA [*]\n')
+        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+        lda = LDA(n_components = n_components_lda)
+        X_train = lda.fit_transform(X_train, y_train)
+        X_val = lda.transform(X_val)
+        print('LDA Done [',u'\u2713',']\n')
+    if pca == 'y' and not lda == 'y':
+        print('Applying PCA [*]\n')
+        if not pca_kernel == 'linear':
+            try:
+                from sklearn.decomposition import KernelPCA
+                kpca = KernelPCA(n_components = n_components_pca, kernel = pca_kernel)
+                X_train = kpca.fit_transform(X_train)
+                X_val = kpca.transform(X_val)
+            except MemoryError as error:
+                    print(error)
+                    end = time.time()
+                    print(end - start)
+                    return
+                
+        elif pca_kernel == 'linear':
+            from sklearn.decomposition import PCA
+            pca = PCA(n_components = n_components_pca)
+            X_train = pca.fit_transform(X_train)
+            X_val = pca.transform(X_val)
+        else :
+            print('Un-identified PCA Kernel')
+            return
+        print('PCA Done [',u'\u2713',']\n')
+        
+    ## Models ---------------------------------------------------------------------
     if predictor == 'lr':
         print('Training Logistic Regression on Training Set [*]\n')
         from sklearn.linear_model import LogisticRegression
@@ -217,7 +278,8 @@ def predictor(
     if not predictor == 'ann': 
         classifier.fit(X_train, y_train)
     print('Model Training Done [',u'\u2713',']\n')
-                              
+    
+    ## Confusion Matrix --------------------------------------------------------------             
     print('''Making Confusion Matrix [*]''')
     from sklearn.metrics import confusion_matrix, accuracy_score
     y_pred = classifier.predict(X_val)
@@ -234,17 +296,19 @@ def predictor(
     ax.xaxis.set_ticklabels(['0', '1']); 
     ax.yaxis.set_ticklabels(['0', '1']);
     
+    ## Accuracy ---------------------------------------------------------------------
     print('''Evaluating Model Performance [*]''')
     accuracy = accuracy_score(y_val, y_pred)
     print('Validation Accuracy is :',accuracy)
     print('Evaluating Model Performance [',u'\u2713',']\n')
     
+    ## K-Fold ---------------------------------------------------------------------
     print('Applying K-Fold Cross validation [*]')
     from sklearn.model_selection import cross_val_score
     import tensorflow as tf
     if predictor == 'ann':
         classifier = tf.keras.wrappers.scikit_learn.KerasClassifier(
-            build_fn=build_ann_model, verbose=1, input_size = input_size, 
+            build_fn=build_ann_model, verbose=1, input_units= input_units, 
             epochs = epochs, batch_size = batch_size
         )
     accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds, scoring='accuracy')
@@ -253,8 +317,9 @@ def predictor(
         accuracy_scores[classifier] = accuracies.mean()*100
     if predictor == 'ann':
         accuracy_scores['ANN'] = accuracies.mean()*100
-    print("Standard Deviation: {:.2f} %".format(accuracies.std()*100))   
+    print("Standard Deviation: {:.2f} %".format(accuracies.std()*100))  
     print('K-Fold Cross validation [',u'\u2713',']\n')
+    ## GridSearch ---------------------------------------------------------------------
     if not predictor == 'nb' and tune :
         print('Applying Grid Search Cross validation [*]')
         from sklearn.model_selection import GridSearchCV,StratifiedKFold
@@ -274,4 +339,8 @@ def predictor(
         print("Best Parameters:", best_parameters)
         print('Applying Grid Search Cross validation [',u'\u2713',']\n')
         
+    
+    
     print('Complete [',u'\u2713',']\n')
+    end = time.time()
+    print('Time Elapsed : ',end - start,'seconds \n')
