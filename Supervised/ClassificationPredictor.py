@@ -56,7 +56,6 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         for i in range(0,len(cat_features)):
             index.append(features.columns.get_loc(cat_features[i]))
         print('Features are Categorical\n')
-        # Encoding the Independent Variable
         from sklearn.compose import ColumnTransformer
         from sklearn.preprocessing import OneHotEncoder
         ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(), index)], remainder='passthrough')
@@ -70,7 +69,8 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         print('Encoding Labels \n')
         labels = le.fit_transform(labels)
         print('Encoding Labels Done [',u'\u2713',']\n')
-    
+    else:
+        print('Features and labels are not categorical [',u'\u2713',']\n')
     print('Applying SMOTE [*]\n')
     from imblearn.over_sampling import SMOTE
     sm=SMOTE(k_neighbors=4)
