@@ -193,28 +193,36 @@ def predictor(
         }
     elif predictor =='ann':
         print('Training ANN on Training Set [*]\n')
-        import tensorflow as tf
-        classifier = tf.keras.models.Sequential()
-        for i in range(0,hidden_layers):
-            classifier.add(tf.keras.layers.Dense(units = input_units, activation = input_activation))
-        classifier.add(tf.keras.layers.Dense(units = output_units, activation = output_activation))
-        classifier.compile(optimizer = optimizer, loss = loss, metrics = metrics,)
+        def build_ann_model():
+            import tensorflow as tf
+            classifier = tf.keras.models.Sequential()
+            for i in range(0,hidden_layers):
+                classifier.add(tf.keras.layers.Dense(units = input_units, activation = input_activation))
+            classifier.add(tf.keras.layers.Dense(units = output_units, activation = output_activation))
+            classifier.compile(optimizer = optimizer, loss = loss, metrics = metrics,)
+            return classifier
+        classifier = build_ann_model()
         ann_history = classifier.fit(X_train, y_train,validation_split = validation_split , validation_data = (X_val, y_val), epochs = epochs)
-        accuracy_scores[predictor] = classifier.evaluate(X_train, y_train)[1] * 100
-#         ann_history.history['accuracy']
-        return ann_history
+
     if not predictor == 'ann': 
         classifier.fit(X_train, y_train)
     print('Model Training Done [',u'\u2713',']\n')
                               
     print('''Making Confusion Matrix [*]''')
-    from sklearn.metrics import confusion_matrix, accuracy_score, plot_confusion_matrix
+    from sklearn.metrics import confusion_matrix, accuracy_score
     y_pred = classifier.predict(X_val)
+    if predictor == 'ann':
+        y_pred = (y_pred > 0.5)
     cm = confusion_matrix(y_val, y_pred)
     print(cm)
     print('Confusion Matrix Done [',u'\u2713',']\n')
-    
-    plot_confusion_matrix(classifier, X_val, y_val, cmap="pink")
+    ax= plt.subplot()
+    sns.heatmap(cm, annot=True, fmt='g', ax=ax);  
+    ax.set_xlabel('Predicted labels');
+    ax.set_ylabel('True labels'); 
+    ax.set_title('Confusion Matrix'); 
+    ax.xaxis.set_ticklabels(['0', '1']); 
+    ax.yaxis.set_ticklabels(['0', '1']);
     
     print('''Evaluating Model Performance [*]''')
     accuracy = accuracy_score(y_val, y_pred)
@@ -223,9 +231,15 @@ def predictor(
     
     print('Applying K-Fold Cross validation [*]')
     from sklearn.model_selection import cross_val_score
-    accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds,)
+    import tensorflow as tf
+    if predictor == 'ann':
+        classifier = tf.keras.wrappers.scikit_learn.KerasClassifier(build_fn=build_ann_model, verbose=1)
+    accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds,scoring='accuracy')
     print("Accuracy: {:.2f} %".format(accuracies.mean()*100))
-    accuracy_scores[classifier] = accuracies.mean()*100
+    if not predictor == 'ann':
+        accuracy_scores[classifier] = accuracies.mean()*100
+    if predictor == 'ann':
+        accuracy_scores['ANN'] = accuracies.mean()*100
     print("Standard Deviation: {:.2f} %".format(accuracies.std()*100))   
     print('K-Fold Cross validation [',u'\u2713',']\n')
     if not predictor == 'nb' and tune and predictor =='ann':
