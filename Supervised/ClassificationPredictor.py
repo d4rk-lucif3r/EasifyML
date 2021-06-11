@@ -71,6 +71,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         print('Encoding Labels Done [',u'\u2713',']\n')
     else:
         print('Features and labels are not categorical [',u'\u2713',']\n')
+
     print('Applying SMOTE [*]\n')
     from imblearn.over_sampling import SMOTE
     sm=SMOTE(k_neighbors=4)
@@ -206,4 +207,4 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
         print("Best Parameters:", best_parameters)
         print('Applying Grid Search Cross validation [',u'\u2713',']\n')
         
-        print('Complete [',u'\u2713',']\n')
+    print('Complete [',u'\u2713',']\n')
