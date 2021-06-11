@@ -2,7 +2,7 @@ accuracy_scores ={}
 def predictor(features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10, random_state =42):
     global accuracy_scores
     """
-    Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
+    Encode Categorical Data then Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
     Fits every model on training set and predicts results find and plots Confusion Matrix, 
     finds accuracy of model applies K-Fold Cross Validation 
     and stores its accuracies in a dictionary containing Model name as Key and accuracies as values and returns it
@@ -51,13 +51,17 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
     """
     print('Checking if labels or features are categorical! [*]\n')
     cat_features=[i for i in features.columns if features.dtypes[i]=='object']
-    if len(cat_features) == 1 :
+    if len(cat_features) >= 1 :
+        index = []
+        for i in range(0,len(cat_features)):
+            index.append(features.columns.get_loc(cat_features[i]))
         print('Features are Categorical\n')
         # Encoding the Independent Variable
-        from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-        le = LabelEncoder()
+        from sklearn.compose import ColumnTransformer
+        from sklearn.preprocessing import OneHotEncoder
+        ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(), index)], remainder='passthrough')
         print('Encoding Features [*]\n')
-        features[cat_features]= le.fit_transform(features[cat_features])
+        features = np.array(ct.fit_transform(features))
         print('Encoding Features Done [',u'\u2713',']\n')
     if labels.dtype == 'O':
         from sklearn.preprocessing import LabelEncoder, OneHotEncoder
