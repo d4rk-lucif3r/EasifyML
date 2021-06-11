@@ -3,7 +3,8 @@ def predictor(
     features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10,
     random_state =42, hidden_layers = 4, output_units = 1, input_units = 6,
     input_activation = 'relu', output_activation = 'sigmoid',optimizer = 'adam',
-    metrics= ['accuracy'], loss = 'binary_crossentropy',validation_split = .20, epochs = 100
+    metrics= ['accuracy'], loss = 'binary_crossentropy',validation_split = .20, epochs = 100,
+    batch_size = 32,
              ):
     global accuracy_scores
     """
@@ -193,7 +194,7 @@ def predictor(
         }
     elif predictor =='ann':
         print('Training ANN on Training Set [*]\n')
-        def build_ann_model():
+        def build_ann_model(input_units):
             import tensorflow as tf
             classifier = tf.keras.models.Sequential()
             for i in range(0,hidden_layers):
@@ -201,8 +202,17 @@ def predictor(
             classifier.add(tf.keras.layers.Dense(units = output_units, activation = output_activation))
             classifier.compile(optimizer = optimizer, loss = loss, metrics = metrics,)
             return classifier
-        classifier = build_ann_model()
-        ann_history = classifier.fit(X_train, y_train,validation_split = validation_split , validation_data = (X_val, y_val), epochs = epochs)
+        classifier = build_ann_model(input_units)
+        ann_history = classifier.fit(
+                                    X_train, y_train,validation_split = validation_split , 
+                                    validation_data = (X_val, y_val), epochs = epochs, batch_size = batch_size
+                                    )
+        
+        parameters={'batch_size':[100, 20, 50, 25, 32], 
+                'nb_epoch':[200, 100, 300, 400],
+                'input_units':[5,6, 10, 11, 12, 15],
+
+                }
 
     if not predictor == 'ann': 
         classifier.fit(X_train, y_train)
@@ -233,8 +243,11 @@ def predictor(
     from sklearn.model_selection import cross_val_score
     import tensorflow as tf
     if predictor == 'ann':
-        classifier = tf.keras.wrappers.scikit_learn.KerasClassifier(build_fn=build_ann_model, verbose=1)
-    accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds,scoring='accuracy')
+        classifier = tf.keras.wrappers.scikit_learn.KerasClassifier(
+            build_fn=build_ann_model, verbose=1, input_size = input_size, 
+            epochs = epochs, batch_size = batch_size
+        )
+    accuracies = cross_val_score(estimator=classifier, X=X_train, y=y_train, cv=cv_folds, scoring='accuracy')
     print("Accuracy: {:.2f} %".format(accuracies.mean()*100))
     if not predictor == 'ann':
         accuracy_scores[classifier] = accuracies.mean()*100
@@ -242,7 +255,7 @@ def predictor(
         accuracy_scores['ANN'] = accuracies.mean()*100
     print("Standard Deviation: {:.2f} %".format(accuracies.std()*100))   
     print('K-Fold Cross validation [',u'\u2713',']\n')
-    if not predictor == 'nb' and tune and predictor =='ann':
+    if not predictor == 'nb' and tune :
         print('Applying Grid Search Cross validation [*]')
         from sklearn.model_selection import GridSearchCV,StratifiedKFold
         
