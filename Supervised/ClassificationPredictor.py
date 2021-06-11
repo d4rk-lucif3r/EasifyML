@@ -1,5 +1,10 @@
 accuracy_scores ={}
-def predictor(features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10, random_state =42):
+def predictor(
+    features, labels, predictor ='lr', params={}, tune = False, test_size = .2, cv_folds =10,
+    random_state =42, hidden_layers = 4, output_units = 1, input_units = 6,
+    input_activation = 'relu', output_activation = 'sigmoid',optimizer = 'adam',
+    metrics= ['accuracy'], loss = 'binary_crossentropy',validation_split = .20, epochs = 100
+             ):
     global accuracy_scores
     """
     Encode Categorical Data then Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
@@ -25,6 +30,8 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
                             dt - Decision Trees
                             nb - GaussianNaive bayes
                             rfc- Random Forest Classifier
+                            xgb- XGBoost Classifier
+                            ann - Artificial Neural Network
         params : dict
                     contains parameters for model
         tune : boolean  
@@ -36,6 +43,27 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
                     include in the test split. If int, represents the absolute number of test samples. 
         cv_folds : int
                 No. of cross validation folds. Default = 10
+        hidden_layers : int
+                No. of default layers of ann. Default = 4
+        inputs_units : int
+                No. of units in input layer. Default = 6
+        output_units : int
+                No. of units in output layer. Default = 6
+        input_activation : str 
+                Activation function for Hidden layers. Default = 'relu'
+        output_activation : str 
+                Activation function for Output layers. Default = 'sigmoid'
+        optimizer: str
+                Optimizer for ann. Default = 'adam'
+        loss : str
+                loss method for ann. Default = 'binary_crossentropy'
+        validation_split : float or int
+                Percentage of validation set splitting in ann. Default = .20
+        epochs : int
+                No. of epochs for ann. Default = 100
+                
+  
+    
     EX: 
       For Logistic Regression
             predictor
@@ -163,8 +191,17 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
             'max_depth': [4,5,6,7,8,9,10,11,12,15,20,30,40,50,70,90,120,150],
             'learning_rate': [0.3, 0.1, 0.03],
         }
-
-    classifier.fit(X_train, y_train)
+    elif predictor =='ann':
+        import tensorflow as tf
+        classifier = tf.keras.models.Sequential()
+        for i in range(0,hidden_layers):
+            classifier.add(tf.keras.layers.Dense(units = input_units, activation = input_activation))
+        classifier.add(tf.keras.layers.Dense(units = output_units, activation = output_activation))
+        classifier.compile(optimizer = optimizer, loss = loss, metrics = metrics,)
+        ann_histry = classifier.fit(X_train, y_train,validation_split = validation_split , validation_data = (X_val, y_val), epochs = epochs)
+        
+    if not predictor == 'ann': 
+        classifier.fit(X_train, y_train)
     print('Model Training Done [',u'\u2713',']\n')
                               
     print('''Making Confusion Matrix [*]''')
@@ -188,7 +225,7 @@ def predictor(features, labels, predictor ='lr', params={}, tune = False, test_s
     accuracy_scores[classifier] = accuracies.mean()*100
     print("Standard Deviation: {:.2f} %".format(accuracies.std()*100))   
     print('K-Fold Cross validation [',u'\u2713',']\n')
-    if not predictor == 'nb' and tune :
+    if not predictor == 'nb' and tune and predictor =='ann':
         print('Applying Grid Search Cross validation [*]')
         from sklearn.model_selection import GridSearchCV,StratifiedKFold
         
