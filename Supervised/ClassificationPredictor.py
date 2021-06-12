@@ -7,6 +7,8 @@ def predictor(
     metrics= ['accuracy'], loss = 'binary_crossentropy',validation_split = .20, epochs = 100,
     batch_size = 32,
              ):  
+    import seaborn as sns
+    import scipy 
     """
     Encode Categorical Data then Applies SMOTE , Splits the features and labels in training and validation sets with test_size = .2 , scales X_train, X_val using StandardScaler.
     Fits every model on training set and predicts results find and plots Confusion Matrix, 
