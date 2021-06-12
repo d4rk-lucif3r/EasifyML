@@ -127,6 +127,17 @@ def predictor(
     else:
         print('Features and labels are not categorical [',u'\u2713',']\n')
         
+    ## Sparse Check -------------------------------------------------------------
+    if scipy.sparse.issparse(features[()]):
+        print('Converting Sparse Features to array []\n')
+        features = features[()].toarray()
+        print('Conversion of Sparse Features to array Done [',u'\u2713',']\n')
+        
+    if scipy.sparse.issparse(labels[()]):
+        print('Converting Sparse Labels to array []\n')
+        labels = labels[()].toarray()
+        print('Conversion of Sparse Labels to array Done [',u'\u2713',']\n')
+        
     ## SMOTE ---------------------------------------------------------------------
     print('Applying SMOTE [*]\n')
     from imblearn.over_sampling import SMOTE
