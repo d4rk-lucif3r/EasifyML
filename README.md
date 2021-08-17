@@ -1,4 +1,9 @@
 # EasifyML
+
+---
+
+## Migrated to [LuciferML](https://github.com/d4rk-lucif3r/LuciferML)
+
 ---
 ## About
 
